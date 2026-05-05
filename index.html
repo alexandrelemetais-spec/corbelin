@@ -485,11 +485,27 @@ const PLAYER_PHOTOS = {
 
 const PIN = '0505';
 const RLABELS = {loup:'Loup Garou',villageois:'Villageois',cupidon:'Cupidon',amoureux:'Amoureux',voyante:'Voyante',sorciere:'Sorcière'};
+const PLAYER_BIOS = {
+  'Mamie': 'La doyenne de Corbelin connaît chaque pierre du village et chaque secret de ses habitants. Derrière ses lunettes et son sourire bienveillant se cache une mémoire d\'acier — elle n\'oublie jamais rien, et surtout pas les trahisons.',
+  'Marie-Cap': 'Marie-Cap est arrivée à Corbelin au volant d\'une voiture bleue par une nuit de brouillard, et personne ne sait vraiment d\'où elle vient. Elle tient les clés du village et, dit-on, bien d\'autres choses encore.',
+  'Lala': 'Avec ses lunettes de mystérieuse exploratrice et son air de savoir ce que les autres ignorent, Lala observe tout depuis son poste. On murmure qu\'elle prépare quelque chose — mais quoi exactement ?',
+  'Olive': 'Olive parcourt les ruelles de Corbelin comme si elle en connaissait chaque recoin depuis toujours. Son sourire désarmant a déjà convaincu plus d\'un villageois de baisser sa garde.',
+  'Pierrol': 'Pierrol sourit en toutes circonstances, même quand il n\'y a franchement pas de quoi. Cette jovialité permanente intrigue — est-ce l\'insouciance du sage ou du coupable ?',
+  'Anne-Claire': 'Anne-Claire a été vue sur le champ de bataille, au marché, et autour du feu — toujours au bon endroit, toujours souriante. Certains disent qu\'elle sait déjà comment tout va finir.',
+  'Mymy': 'Mymy est la gardienne des recettes et des secrets de Corbelin. Autour de sa table à la lueur des bougies, elle recueille les confidences — et les garde précieusement.',
+  'Coco': 'Coco se promène dans Corbelin avec un parchemin mystérieux qu\'elle refuse de montrer. Ses yeux pétillants en disent long, mais sa bouche, elle, reste bien fermée.',
+  'Victor': 'Victor est l\'homme aux lunettes de soleil qui observe depuis l\'ombre. Dans les forêts brumeuses de Corbelin, ceux qui voient sans être vus ont toujours une longueur d\'avance.',
+  'Arthur': 'Arthur porte un pendentif en forme de loup et ne s\'en cache pas. Coïncidence malheureuse ou provocation délibérée ? À Corbelin, les innocents ne portent pas de tels ornements.',
+  'Romane': 'Romane avance dans Corbelin comme si la brume lui appartenait. Sereine, les mains croisées, elle attend — et ceux qui savent attendre finissent toujours par gagner.',
+  'Paul': 'Paul a l\'air de celui qui arrive en vacances alors que le village brûle. Cette légèreté déconcertante cache peut-être la plus grande habileté de tous les habitants de Corbelin.',
+  'Hugo': 'Hugo est le plus jeune de Corbelin, mais ses yeux ont déjà vu des choses que les adultes préfèrent ignorer. Il sait des secrets que personne ne lui a confiés — et ça, c\'est troublant.',
+};
+
 const PRENOMS = ['Mamie','Marie-Cap','Lala','Olive','Pierrol','Anne-Claire','Mymy','Coco','Victor','Arthur','Romane','Paul','Hugo'];
 let isNarrateur = false;
 let G = {
   quests:{1:false,2:false},
-  players:PRENOMS.map((name,i)=>({id:i,name,role:'',alive:true,bio:''})),
+  players:PRENOMS.map((name,i)=>({id:i,name,role:'',alive:true,bio:PLAYER_BIOS[name]||''})),
   victimId:null, sorcAction:null, sorcKillId:null,
   potV:true, potM:true, cupidPair:null,
   tour:1, events:[], votes:[], resumes:[], locked:false
@@ -865,6 +881,7 @@ function renderMatrix(){
 
 /* ── JOUEURS ── */
 function renderJoueurs(){renderResumes();renderBioGrid();renderVotesJ();renderBadgesJoueurs();}
+renderBioGrid();
 function renderResumes(){
   const c=document.getElementById('j-resumes');c.innerHTML='';
   if(!G.resumes.length){c.innerHTML='<div style="font-size:13px;color:var(--text-muted);font-style:italic;text-align:center;padding:2rem 0;line-height:1.8;">Les résumés apparaîtront<br>après chaque nuit.</div>';return;}
@@ -928,7 +945,7 @@ async function generateResume(){
 }
 async function callClaude(prompt){
   try{
-    const r=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:prompt}]})});
     const d=await r.json();
     return d.content?.find(b=>b.type==='text')?.text||'(erreur de génération)';
   }catch(e){return '(erreur de connexion à l\'IA)';}
