@@ -14,12 +14,15 @@ exports.handler = async (event) => {
       body: JSON.stringify(body)
     });
     const data = await response.json();
+    console.log('STATUS:', response.status);
+    console.log('RESPONSE:', JSON.stringify(data));
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     };
   } catch (err) {
+    console.log('ERROR:', err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message })
