@@ -506,7 +506,7 @@ const PRENOMS = ['Mamie','Marie-Cap','Lala','Olive','Pierrol','Anne-Claire','Mym
 let isNarrateur = false;
 let G = {
   quests:{1:false,2:false},
-  players:PRENOMS.map((name,i)=>({id:i,name,role:'',alive:true,bio:''})),
+  players:PRENOMS.map((name,i)=>({id:i,name,role:'',alive:true,bio:PLAYER_BIOS[name]||''})),
   victimId:null, sorcAction:null, sorcKillId:null,
   potV:true, potM:true, cupidPair:null,
   tour:1, events:[], votes:[], resumes:[], locked:false
@@ -573,6 +573,9 @@ function showJTab(n){
   tabs.forEach(t=>document.getElementById('jt-'+t).classList.remove('active'));
   document.getElementById('jt-'+n).classList.add('active');
   hlJNav(tabs.indexOf(n));
+  if(n==='habitants')renderBioGrid();
+  if(n==='votes')renderVotesJ();
+  if(n==='badges')renderBadgesJoueurs();
 }
 function showStat(idx){
   ['s-votes','s-badges','s-matrice'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i===idx));
@@ -625,12 +628,9 @@ async function validateSetup(){
   const cup=G.players.find(p=>p.role==='cupidon'),am=G.players.find(p=>p.role==='amoureux');
   if(cup&&am)G.cupidPair=[cup.id,am.id];
   G.events.push({tour:1,type:'quete',text:'La partie commence à Corbelin. Treize habitants, la nuit pour témoin.'});
-  document.getElementById('setup-msg').textContent='Génération des bios en cours...';
+  document.getElementById('setup-msg').textContent='La partie est lancée !';
   document.getElementById('setup-msg').className='msg ok';
   document.getElementById('setup-btn').disabled=true;
-  for(const p of G.players){
-    p.bio=await callClaude(`Tu es le narrateur d'une partie de Loup Garous en famille avec des enfants dès 6 ans. Écris une bio courte et amusante (3 phrases max) pour "${p.name}", habitant du village de Corbelin. Ton : conte espiègle, chaleureux, pas effrayant. Ne mentionne pas son rôle dans le jeu.`);
-  }
   G.locked=true;
   document.getElementById('setup-msg').textContent='La partie est lancée !';
   // Verrouiller tous les inputs et selects de la config
@@ -925,8 +925,6 @@ function openBio(id){
   document.body.appendChild(overlay);
 }
 function closeBio(){const o=document.getElementById('bio-modal-overlay');if(o)o.remove();}
-
-function closeBio(){document.getElementById('j-detail').style.display='none';}
 function renderVotesJ(){
   const c=document.getElementById('j-votes');c.innerHTML='';
   if(!G.votes.length){c.innerHTML='<div style="font-size:13px;color:var(--text-muted);font-style:italic;text-align:center;padding:2rem 0;">Aucun vote pour l\'instant.</div>';return;}
