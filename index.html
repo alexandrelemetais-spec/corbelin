@@ -342,7 +342,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-se
       <button class="btn btn-ghost" onclick="closeBio()" style="margin-top:0;">Fermer</button>
     </div>
     <div class="slabel">Les habitants de Corbelin</div>
-    <div class="bgrid" id="j-bgrid"><div style="font-size:13px;color:var(--text-muted);font-style:italic;text-align:center;padding:2rem 0;grid-column:span 2;">Les habitants apparaîtront<br>après la configuration.</div></div>
+    <div class="bgrid" id="j-bgrid"></div>
   </div>
 
   <!-- ══ JOUEURS — VOTES ══ -->
@@ -889,7 +889,9 @@ function renderResumes(){
 }
 function renderBioGrid(){
   const g=document.getElementById('j-bgrid');g.innerHTML='';
-  G.players.filter(p=>p.name).forEach((p)=>{
+  const players=G.players.filter(p=>p.name);
+  if(!players.length){g.innerHTML='<div style="font-size:13px;color:var(--text-muted);font-style:italic;text-align:center;padding:2rem 0;grid-column:span 2;">Aucun habitant.</div>';return;}
+  players.forEach((p)=>{
     const card=document.createElement('div');card.className='bcard'+(p.alive?'':' dead');
     const photo=PLAYER_PHOTOS[p.name];
     const imgHtml=photo
