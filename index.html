@@ -383,6 +383,24 @@ body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-se
     <button class="btn btn-ghost" onclick="randomAttribution()" id="random-btn">🎲 Attribution aléatoire</button>
     <button class="btn btn-fire" id="setup-btn" disabled onclick="validateSetup()">🔥 Lancer la partie</button>
     <button class="btn btn-ghost" id="reset-btn" disabled onclick="resetState()" style="border-color:var(--loup-c);color:var(--loup-c);opacity:0.3;margin-top:6px;">↺ Réinitialiser la partie</button>
+    <div id="sorc-unlock-block" style="display:none;margin-top:1rem;">
+      <div class="slabel">Sorcière</div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:8px;">La quête est remportée. Désignez le villageois qui devient la Sorcière.</div>
+        <div class="pgrid" id="sorc-unlock-grid"></div>
+        <button class="btn btn-fire" id="btn-unlock-sorc" disabled onclick="unlockSorciere()">🧪 Attribuer le rôle</button>
+        <div class="msg" id="msg-unlock-sorc"></div>
+      </div>
+    </div>
+    <div id="voy-unlock-block" style="display:none;margin-top:1rem;">
+      <div class="slabel">Voyante</div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:8px;">La quête est remportée. Désignez le villageois qui devient la Voyante.</div>
+        <div class="pgrid" id="voy-unlock-grid"></div>
+        <button class="btn btn-fire" id="btn-unlock-voy" disabled onclick="unlockVoyante()">🔮 Attribuer le rôle</button>
+        <div class="msg" id="msg-unlock-voy"></div>
+      </div>
+    </div>
     <div class="msg" id="setup-msg"></div>
   </div>
 
@@ -521,6 +539,8 @@ let G = {
   players:PRENOMS.map((name,i)=>({id:i,name,role:'',alive:true,bio:PLAYER_BIOS[name]||''})),
   victimId:null, sorcAction:null, sorcKillId:null,
   potV:true, potM:true, cupidPair:null,
+  sorcUnlocked:false, sorcPlayerId:null,
+  voyUnlocked:false, voyPlayerId:null,
   tour:1, events:[], votes:[], resumes:[], locked:false
 };
 
@@ -534,6 +554,8 @@ async function saveState(){
     quests:G.quests,
     players:G.players.map(p=>({id:p.id,name:p.name,role:p.role,alive:p.alive,bio:p.bio})),
     victimId:G.victimId, sorcAction:G.sorcAction, sorcKillId:G.sorcKillId,
+    sorcUnlocked:G.sorcUnlocked, sorcPlayerId:G.sorcPlayerId,
+    voyUnlocked:G.voyUnlocked, voyPlayerId:G.voyPlayerId,
     potV:G.potV, potM:G.potM, cupidPair:G.cupidPair,
     tour:G.tour, events:G.events, votes:G.votes, resumes:G.resumes, locked:G.locked
   };
@@ -560,6 +582,8 @@ async function loadState(){
     G.quests=s.quests||{1:false,2:false};
     G.players=s.players||G.players;
     G.victimId=s.victimId; G.sorcAction=s.sorcAction; G.sorcKillId=s.sorcKillId;
+    G.sorcUnlocked=s.sorcUnlocked||false; G.sorcPlayerId=s.sorcPlayerId!=null?s.sorcPlayerId:null;
+    G.voyUnlocked=s.voyUnlocked||false; G.voyPlayerId=s.voyPlayerId!=null?s.voyPlayerId:null;
     G.potV=s.potV!==undefined?s.potV:true;
     G.potM=s.potM!==undefined?s.potM:true;
     G.cupidPair=s.cupidPair;
@@ -577,6 +601,8 @@ async function loadState(){
       G.quests=s.quests||{1:false,2:false};
       G.players=s.players||G.players;
       G.victimId=s.victimId; G.sorcAction=s.sorcAction; G.sorcKillId=s.sorcKillId;
+    G.sorcUnlocked=s.sorcUnlocked||false; G.sorcPlayerId=s.sorcPlayerId!=null?s.sorcPlayerId:null;
+    G.voyUnlocked=s.voyUnlocked||false; G.voyPlayerId=s.voyPlayerId!=null?s.voyPlayerId:null;
       G.potV=s.potV!==undefined?s.potV:true;
       G.potM=s.potM!==undefined?s.potM:true;
       G.cupidPair=s.cupidPair;
@@ -638,6 +664,8 @@ function activateNarrateur(){
   document.getElementById('mt-setup').classList.add('active');
   hlMNav(0);
   renderSetup();
+  renderSorcUnlock();
+  renderVoyUnlock();
 }
 function switchToJoueurs(){
   isNarrateur=false;
@@ -660,6 +688,7 @@ function showMTab(n){
   if(n==='timeline')renderTimeline();
   if(n==='phases')renderVictimGrid();
   if(n==='stats')renderStats();
+  if(n==='setup'){renderSorcUnlock();renderVoyUnlock();}
 }
 function showJTab(n){
   const tabs=['habitants','resume','votes','badges','rumeurs'];
@@ -679,13 +708,12 @@ function showStat(idx){
 }
 
 /* ── SETUP ── */
-function avRoles(){const b=['loup','villageois','cupidon','amoureux'];if(G.quests[1])b.push('sorciere');if(G.quests[2])b.push('voyante');return b;}
+function avRoles(){const b=['loup','villageois','cupidon','amoureux'];if(G.quests[2])b.push('voyante');return b;}
 
 function randomAttribution(){
   if(G.locked)return;
   // Construire le pool exact : 3 loups + 10 villageois (cupidon, amoureux, + sorciere/voyante si quêtes, reste villageois)
   const pool=['loup','loup','loup','cupidon','amoureux'];
-  if(G.quests[1])pool.push('sorciere'); else pool.push('villageois');
   if(G.quests[2])pool.push('voyante'); else pool.push('villageois');
   while(pool.length<13)pool.push('villageois');
   // Mélanger (Fisher-Yates)
@@ -707,7 +735,19 @@ function renderSetup(){
     const sel=document.createElement('select');sel.className='rsel';
     sel.innerHTML='<option value="">— rôle —</option>'+avRoles().map(r=>`<option value="${r}"${p.role===r?' selected':''}>${RLABELS[r]}</option>`).join('');
     sel.onchange=e=>{G.players[i].role=e.target.value;updateSetupCtrs();};
-    if(G.locked){inp.disabled=true;inp.style.opacity='0.5';sel.disabled=true;sel.style.opacity='0.5';}
+    if(G.locked){
+      inp.disabled=true;inp.style.opacity='0.5';
+      // Si le joueur a le rôle sorcière (attribué en cours de partie), afficher un badge à la place du select
+      if(p.role==='sorciere'||p.role==='voyante'){
+        sel.style.display='none';
+        const badge=document.createElement('span');
+        badge.className='rtag rt-'+p.role;
+        badge.textContent=RLABELS[p.role];
+        row.appendChild(av);row.appendChild(inp);row.appendChild(badge);list.appendChild(row);
+        return;
+      }
+      sel.disabled=true;sel.style.opacity='0.5';
+    }
     row.appendChild(av);row.appendChild(inp);row.appendChild(sel);list.appendChild(row);
   });
   updateSetupCtrs();
@@ -746,11 +786,59 @@ function toggleQ(n){
   G.quests[n]=!G.quests[n];
   document.getElementById('q'+n).classList.toggle('on',G.quests[n]);
   G.players.forEach((p,i)=>{
-    if(p.role==='sorciere'&&!G.quests[1])G.players[i].role='';
     if(p.role==='voyante'&&!G.quests[2])G.players[i].role='';
   });
   renderSetup();
+  renderSorcUnlock();
+  renderVoyUnlock();
 }
+function renderRoleUnlock(role){
+  const questN=role==='sorciere'?1:2;
+  const unlockedKey=role==='sorciere'?'sorcUnlocked':'voyUnlocked';
+  const blockId=role==='sorciere'?'sorc-unlock-block':'voy-unlock-block';
+  const gridId=role==='sorciere'?'sorc-unlock-grid':'voy-unlock-grid';
+  const btnId=role==='sorciere'?'btn-unlock-sorc':'btn-unlock-voy';
+  const msgId=role==='sorciere'?'msg-unlock-sorc':'msg-unlock-voy';
+  const candKey=role==='sorciere'?'_sorcCandidateId':'_voyCandidateId';
+  const label=RLABELS[role];
+  const block=document.getElementById(blockId);
+  if(!block)return;
+  if(!G.quests[questN]||!G.locked||G[unlockedKey]){block.style.display='none';return;}
+  block.style.display='';
+  const grid=document.getElementById(gridId);
+  grid.innerHTML='';
+  G.players.filter(p=>p.alive&&p.role==='villageois').forEach(p=>{
+    const b=document.createElement('button');b.className='pgrid-btn'+(G[candKey]===p.id?' sel':'');
+    b.textContent=p.name;
+    b.onclick=()=>{G[candKey]=p.id;document.getElementById(btnId).disabled=false;renderRoleUnlock(role);};
+    grid.appendChild(b);
+  });
+}
+function renderSorcUnlock(){renderRoleUnlock('sorciere');}
+function renderVoyUnlock(){renderRoleUnlock('voyante');}
+function unlockRole(role){
+  const candKey=role==='sorciere'?'_sorcCandidateId':'_voyCandidateId';
+  const unlockedKey=role==='sorciere'?'sorcUnlocked':'voyUnlocked';
+  const playerIdKey=role==='sorciere'?'sorcPlayerId':'voyPlayerId';
+  const msgId=role==='sorciere'?'msg-unlock-sorc':'msg-unlock-voy';
+  const gridId=role==='sorciere'?'sorc-unlock-grid':'voy-unlock-grid';
+  const btnId=role==='sorciere'?'btn-unlock-sorc':'btn-unlock-voy';
+  const label=RLABELS[role];
+  const id=G[candKey];
+  if(id===null||id===undefined)return;
+  G.players[id].role=role;
+  G[unlockedKey]=true;
+  G[playerIdKey]=id;
+  delete G[candKey];
+  document.getElementById(btnId).disabled=true;
+  document.getElementById(msgId).textContent='✓ '+G.players[id].name+' est maintenant la '+label+' !';
+  document.getElementById(msgId).className='msg ok';
+  document.getElementById(gridId).innerHTML='';
+  saveState();
+  renderSetup();
+}
+function unlockSorciere(){unlockRole('sorciere');}
+function unlockVoyante(){unlockRole('voyante');}
 async function validateSetup(){
   const cup=G.players.find(p=>p.role==='cupidon'),am=G.players.find(p=>p.role==='amoureux');
   if(cup&&am)G.cupidPair=[cup.id,am.id];
@@ -759,7 +847,7 @@ async function validateSetup(){
   saveState();
   // Verrouiller tous les inputs et selects de la config
   document.querySelectorAll('#plist input, #plist select').forEach(el=>{el.disabled=true;el.style.opacity='0.5';});
-  document.querySelectorAll('#q1,#q2').forEach(el=>{el.disabled=true;el.style.opacity='0.5';});
+  // q1 et q2 restent cliquables en cours de partie pour débloquer Sorcière et Voyante
   updateSetupCtrs();
   renderBioGrid();
 }
@@ -780,7 +868,7 @@ function confirmVictim(){
   document.getElementById('msg-victim').className='msg ok';
   document.getElementById('btn-victim').disabled=true;
   document.querySelectorAll('#victim-grid .pgrid-btn').forEach(b=>{b.onclick=null;b.style.cursor='default';});
-  const hasSorc=G.quests[1]&&G.players.find(p=>p.role==='sorciere'&&p.alive);
+  const hasSorc=G.sorcUnlocked&&G.sorcPlayerId!==null&&G.players[G.sorcPlayerId]&&G.players[G.sorcPlayerId].alive;
   if(hasSorc&&(G.potV||G.potM)){document.getElementById('sorc-block').style.display='';renderSorcOpts();}
   else showMortSum();
 }
@@ -800,9 +888,9 @@ function renderSorcOpts(){
 }
 function renderSorcKill(){
   const g=document.getElementById('sorc-kill-grid');g.innerHTML='';
-  living().filter(p=>p.id!==G.victimId).forEach(p=>{
+  living().filter(p=>p.id!==G.victimId&&p.id!==G.sorcPlayerId).forEach(p=>{
     const b=document.createElement('button');b.className='pgrid-btn'+(G.sorcKillId===p.id?' sel':'');
-    b.textContent=p.name;b.onclick=()=>{G.sorcKillId=p.id;renderSorcKill();};g.appendChild(b);
+    b.textContent=p.name;b.onclick=()=>{G.sorcKillId=p.id;document.getElementById('btn-sorc').disabled=false;renderSorcKill();};g.appendChild(b);
   });
 }
 function confirmSorc(){
@@ -827,8 +915,14 @@ function cloreNuit(){
   const morts=[];const v=G.players[G.victimId];
   if(G.sorcAction!=='ressusciter'){v.alive=false;morts.push(v.name);checkAmoureux(v.id,morts);}
   if(G.sorcAction==='tuer'&&G.sorcKillId!==null){const k=G.players[G.sorcKillId];k.alive=false;morts.push(k.name);checkAmoureux(k.id,morts);}
-  let txt=morts.length?morts.join(' et ')+' ont été dévorés cette nuit.':'Personne n\'a été dévoré cette nuit.';
-  if(G.sorcAction==='ressusciter')txt=v.name+' a été sauvé(e) par la Sorcière.';
+  let txt;
+  if(G.sorcAction==='ressusciter'){
+    txt = 'Personne n\'a été dévoré cette nuit.';
+  } else if(G.sorcAction==='tuer'&&G.sorcKillId!==null){
+    txt = morts.join(' et ')+' sont morts cette nuit.';
+  } else {
+    txt = morts.length?morts.join(' et ')+' ont été dévorés cette nuit.':'Personne n\'a été dévoré cette nuit.';
+  }
   G.events.push({tour:G.tour,type:'nuit',text:txt});
   G.victimId=null;G.sorcAction=null;G.sorcKillId=null;
   saveState();
@@ -1081,12 +1175,25 @@ async function generateResume(tour){
   // Info nuit — depuis l'event sauvegardé
   const nuitTexte = nuitEvent ? nuitEvent.text : 'Rien de notable cette nuit.';
 
-  // Enrichir avec les rôles des morts cette nuit
-  let nuitInfo = nuitTexte;
-  // Trouver les joueurs morts cette nuit en croisant avec les noms dans le texte
-  const mortsNuit = G.players.filter(p => !p.alive && nuitTexte.includes(p.name));
-  if(mortsNuit.length > 0){
-    nuitInfo += ' (' + mortsNuit.map(p => p.name + ' était ' + (RLABELS[p.role]||p.role)).join(', ') + ')';
+  // Si quelqu'un a été sauvé cette nuit, ne pas révéler le nom ni la Sorcière
+  const aEteRessusite = nuitTexte.includes('sauvé') || nuitTexte.includes('Sorcière');
+  const sorcTue = nuitTexte.includes('sont morts cette nuit');
+  let nuitInfo;
+  if(aEteRessusite){
+    nuitInfo = 'Cette nuit, personne n\'a été dévoré.';
+  } else if(sorcTue){
+    // Sorcière a tué quelqu'un : on dit juste que des gens sont morts, sans préciser la cause
+    const mortsNuit = G.players.filter(p => !p.alive && nuitTexte.includes(p.name));
+    nuitInfo = nuitTexte;
+    if(mortsNuit.length > 0){
+      nuitInfo += ' (' + mortsNuit.map(p => p.name + ' était ' + (RLABELS[p.role]||p.role)).join(', ') + ')';
+    }
+  } else {
+    nuitInfo = nuitTexte;
+    const mortsNuit = G.players.filter(p => !p.alive && nuitTexte.includes(p.name));
+    if(mortsNuit.length > 0){
+      nuitInfo += ' (' + mortsNuit.map(p => p.name + ' était ' + (RLABELS[p.role]||p.role)).join(', ') + ')';
+    }
   }
 
   // Info conseil
@@ -1116,6 +1223,8 @@ Règles importantes :
 - Pas de mots compliqués ou de tournures trop littéraires
 - Révèle le rôle des joueurs morts (villageois, loup garou, sorcière...)
 - Cite les noms des joueurs qui ont voté pour l'élimination
+- Ne mentionne JAMAIS la Sorcière, ses potions, ni qu'un joueur a été sauvé ou ressuscité cette nuit — si personne n'est mort la nuit, dis simplement que la nuit a été calme
+- Si plusieurs personnes sont mortes cette nuit, dis simplement qu'elles sont mortes sans préciser qui les a tuées (ne dis pas "les loups ont dévoré X et Y")
 - Termine avec le décompte restant, sur un ton fun ("Plus que X habitants... les loups se régalent !")
 - Sois dramatique mais pas effrayant, c'est un jeu en famille !`;
 
