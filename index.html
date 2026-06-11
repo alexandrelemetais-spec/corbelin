@@ -310,7 +310,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-se
 .dl-stone-wrap { display:flex; justify-content:center; margin:1.5rem 0 1.25rem; }
 .dl-stone { width:160px; height:160px; border-radius:50%; background:radial-gradient(circle at 40% 35%, rgba(232,114,26,0.5) 0%, rgba(232,114,26,0.15) 50%, transparent 70%); border:2px solid var(--border-fire); box-shadow:0 0 30px rgba(232,114,26,0.15), inset 0 0 20px rgba(232,114,26,0.08); animation:dl-pulse 2s ease-in-out infinite; cursor:pointer; user-select:none; -webkit-user-select:none; display:flex; align-items:center; justify-content:center; }
 .dl-stone.active { animation:dl-pulse-fast 0.5s ease-in-out infinite; box-shadow:0 0 70px rgba(232,114,26,0.5), inset 0 0 40px rgba(232,114,26,0.25); }
-.dl-stone-inner { font-size:11px; color:rgba(232,114,26,0.7); letter-spacing:0.06em; text-align:center; pointer-events:none; padding:0 12px; line-height:1.6; font-family:'Nunito',sans-serif; font-weight:600; }
+.dl-stone-inner { font-size:15px; color:rgba(232,114,26,0.7); letter-spacing:0.06em; text-align:center; pointer-events:none; padding:0 12px; line-height:1.6; font-family:'Nunito',sans-serif; font-weight:600; }
 @keyframes dl-pulse { 0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(232,114,26,0.15);} 50%{transform:scale(1.04);box-shadow:0 0 40px rgba(232,114,26,0.3);} }
 @keyframes dl-pulse-fast { 0%,100%{transform:scale(1.02);box-shadow:0 0 55px rgba(232,114,26,0.45);} 50%{transform:scale(1.1);box-shadow:0 0 100px rgba(232,114,26,0.75);} }
 .dl-msg { font-size:12px; color:var(--text-muted); text-align:center; min-height:20px; font-style:italic; letter-spacing:0.03em; margin-bottom:0.75rem; }
@@ -359,7 +359,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-se
     display:none;
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     font-family:'Cinzel',serif; font-size:40px; letter-spacing:0.15em;
-    color:white; text-transform:uppercase; white-space:nowrap;
+    color:white; text-transform:uppercase; white-space:normal; text-align:center;
+    max-width:85vw; width:85vw; word-break:break-word;
     background:none; border:none; cursor:pointer;
     animation:pulse 2s ease-in-out infinite;
     text-shadow: 0 0 20px rgba(232,114,26,0.8);
@@ -1794,6 +1795,11 @@ function initDlStone(){
 
 function dlStartHold(){
   if(Date.now() < DL.cooldownUntil) return;
+  // Déverrouille l'audio sur mobile (doit se faire dans un geste utilisateur direct)
+  ['snd-wolf','snd-sheep','snd-asterix'].forEach(id=>{
+    const a=document.getElementById(id);
+    if(a){a.play().then(()=>{a.pause();a.currentTime=0;}).catch(()=>{});}
+  });
   const stone = document.getElementById('dl-stone');
   stone.classList.add('active');
   document.getElementById('dl-stone-inner').textContent = '✦';
