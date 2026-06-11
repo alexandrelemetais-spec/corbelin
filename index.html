@@ -262,6 +262,44 @@ body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-se
   #splash-canvas { width:480px; height:320px; }
 }
 
+/* PORTRAIT-ROBOT */
+.pj-view { display:none; }
+.pj-view.active { display:block; }
+.pj-portrait-wrap { position:relative; width:285px; height:285px; margin:0 auto 1rem; border-radius:50%; overflow:hidden; border:2px solid var(--border-fire); background:var(--surface2); }
+.pj-portrait-img { width:100%; height:100%; object-fit:cover; display:block; }
+.pj-portrait-img.blurring { animation:pj-deblur 25s linear forwards; }
+@keyframes pj-deblur {
+  0%   { filter: blur(30px); }
+  25%  { filter: blur(8px);  }
+  55%  { filter: blur(3px);  }
+  100% { filter: blur(0);    }
+}
+.pj-timer-bar-wrap { height:3px; background:var(--surface2); border-radius:99px; margin-bottom:0.75rem; overflow:hidden; }
+.pj-timer-bar { height:100%; width:100%; background:var(--fire); border-radius:99px; animation:pj-shrink 25s linear forwards; transform-origin:left; }
+@keyframes pj-shrink { from { width:100%; } to { width:0%; } }
+.pj-score-display { font-family:'Archivo Black',sans-serif; font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:0.6rem; letter-spacing:0.06em; text-transform:uppercase; }
+.pj-score-display span { color:var(--fire-light); font-size:15px; }
+.pj-progress { font-size:10px; color:var(--text-dim); text-align:center; margin-bottom:0.6rem; letter-spacing:0.1em; font-family:'Archivo Black',sans-serif; text-transform:uppercase; }
+.pj-names-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:0.75rem; }
+.pj-name-btn { padding:7px 4px; border-radius:5px; border:1px solid var(--border); background:var(--surface2); font-family:'Nunito',sans-serif; font-size:11px; font-weight:600; color:var(--text); cursor:pointer; text-align:center; transition:background 0.1s, border-color 0.1s; -webkit-tap-highlight-color:transparent; }
+.pj-name-btn:active, .pj-name-btn:focus { background:rgba(232,114,26,0.15); border-color:var(--fire); outline:none; }
+.pj-name-btn.used { opacity:0.25; cursor:default; pointer-events:none; }
+.pj-reveal { text-align:center; padding:0.5rem 0 0.75rem; }
+.pj-reveal-name { font-family:'Archivo Black',sans-serif; font-size:15px; letter-spacing:0.06em; margin-top:0.5rem; text-transform:uppercase; }
+.pj-reveal-name.correct { color:var(--sorc-c); }
+.pj-reveal-name.wrong { color:var(--loup-c); }
+.pj-reveal-pts { font-size:12px; color:var(--text-muted); margin-top:3px; font-style:italic; }
+.pj-result-score { font-family:'Archivo Black',sans-serif; font-size:56px; color:var(--fire-light); text-align:center; line-height:1; margin:0.75rem 0 0.25rem; transition:opacity 0.5s, transform 0.5s; }
+.pj-result-label { font-family:'Archivo Black',sans-serif; font-size:10px; letter-spacing:0.15em; color:var(--text-muted); text-align:center; text-transform:uppercase; margin-bottom:1.25rem; }
+.pj-lb-row { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
+.pj-lb-row:last-child { border-bottom:none; }
+.pj-lb-rank { font-family:'Archivo Black',sans-serif; font-size:11px; color:var(--text-dim); width:18px; flex-shrink:0; }
+.pj-lb-name { font-size:14px; color:var(--text); font-weight:600; flex:1; }
+.pj-lb-name.me { color:var(--fire-light); }
+.pj-lb-score { font-family:'Archivo Black',sans-serif; font-size:13px; color:var(--fire-light); }
+.pj-id-title { font-family:'Archivo Black',sans-serif; font-size:14px; color:var(--fire-light); letter-spacing:0.06em; text-align:center; margin-bottom:0.4rem; text-transform:uppercase; }
+.pj-id-sub { font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:1.25rem; font-style:italic; }
+
 </style>
 </head>
 <body>
@@ -310,6 +348,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-se
   <!-- NAV JOUEURS (défaut) -->
   <div id="nav-joueurs" class="nav">
     <button class="nav-btn active" onclick="showJTab('habitants')">Habitants</button>
+    <button class="nav-btn" onclick="showJTab('prejeu')">Pré-jeu</button>
     <button class="nav-btn" onclick="showJTab('resume')">Résumé</button>
     <button class="nav-btn" onclick="showJTab('votes')">Votes</button>
     <button class="nav-btn" onclick="showJTab('badges')">Badges</button>
@@ -344,6 +383,58 @@ body { background: var(--bg); color: var(--text); font-family: 'Nunito', sans-se
     </div>
     <div class="slabel">Les habitants de Corbelin</div>
     <div class="bgrid" id="j-bgrid"></div>
+  </div>
+
+  <!-- ══ JOUEURS — PRÉ-JEU ══ -->
+  <div id="jt-prejeu" class="screen">
+
+    <!-- IDENTIFICATION -->
+    <div id="pj-identify" class="pj-view">
+      <div class="pj-id-title" style="margin-top:0.5rem;">Qui es-tu ?</div>
+      <div class="pj-id-sub">Sélectionne ton prénom pour commencer</div>
+      <div class="pgrid" id="pj-id-grid"></div>
+    </div>
+
+    <!-- INTRO -->
+    <div id="pj-intro" class="pj-view">
+      <div class="slabel" style="margin-top:0;">Portrait-Robot</div>
+      <div style="font-size:12px;color:var(--text-muted);font-style:italic;margin-bottom:1rem;" id="pj-welcome"></div>
+      <div class="card card-fire" style="margin-bottom:1rem;">
+        <ul style="list-style:none;padding:0;margin:0;">
+          <li style="font-size:13px;color:var(--text);line-height:1.9;padding-left:2px;">🔍 13 portraits s'enchaînent, de plus en plus nets</li>
+          <li style="font-size:13px;color:var(--text);line-height:1.9;padding-left:2px;">⚡ Plus tu réponds vite, plus tu marques de points</li>
+          <li style="font-size:13px;color:var(--text);line-height:1.9;padding-left:2px;">💀 Une mauvaise réponse = 0 point, portrait suivant</li>
+        </ul>
+      </div>
+      <button class="btn btn-fire" onclick="startPjGame()">Jouer</button>
+      <button class="btn btn-ghost" onclick="showPjClassement()">Classement</button>
+      <div id="pj-lb-intro" style="margin-top:1.25rem;display:none;">
+        <div class="slabel">Classement du village</div>
+        <div id="pj-lb-intro-list"></div>
+      </div>
+    </div>
+
+    <!-- GAME -->
+    <div id="pj-game" class="pj-view">
+      <div class="pj-progress" id="pj-progress">Portrait 1 / 13</div>
+      <div class="pj-score-display">Score : <span id="pj-score-live">0</span></div>
+      <div class="pj-timer-bar-wrap" id="pj-bar-wrap"><div class="pj-timer-bar"></div></div>
+      <div id="pj-portrait-area"></div>
+      <div id="pj-reveal-area" style="display:none;"></div>
+      <div class="pj-names-grid" id="pj-names-grid"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="pj-result" class="pj-view">
+      <div class="slabel" style="margin-top:0;">Résultat final</div>
+      <div class="pj-result-score" id="pj-final-score" style="opacity:0;transform:scale(0.5);">0</div>
+      <div class="pj-result-label">points sur 1300</div>
+      <div class="slabel">Classement du village</div>
+      <div id="pj-lb-result"></div>
+      <button class="btn btn-fire" style="margin-top:1rem;" onclick="startPjGame()">Rejouer</button>
+      <button class="btn btn-ghost" onclick="showPjView('intro')">Retour</button>
+    </div>
+
   </div>
 
   <!-- ══ JOUEURS — VOTES ══ -->
@@ -691,11 +782,12 @@ function showMTab(n){
   if(n==='setup'){renderSorcUnlock();renderVoyUnlock();}
 }
 function showJTab(n){
-  const tabs=['habitants','resume','votes','badges','rumeurs'];
+  const tabs=['habitants','prejeu','resume','votes','badges','rumeurs'];
   tabs.forEach(t=>document.getElementById('jt-'+t).classList.remove('active'));
   document.getElementById('jt-'+n).classList.add('active');
   hlJNav(tabs.indexOf(n));
   if(n==='habitants')renderBioGrid();
+  if(n==='prejeu')initPrejeu();
   if(n==='resume')renderResumes();
   if(n==='votes')renderVotesJ();
   if(n==='badges')renderBadgesJoueurs();
@@ -1518,6 +1610,224 @@ Termine par "— Un villageois qui préfère rester anonyme 👀"`;
 
   btn.disabled = false;
   btn.textContent = '🔮 Nouvelle rumeur';
+}
+
+/* ── PORTRAIT-ROBOT ── */
+let PJ = { scores: {}, playerName: null, game: null };
+
+function showPjView(v){
+  ['identify','intro','game','result'].forEach(n=>{
+    document.getElementById('pj-'+n).classList.toggle('active', n===v);
+  });
+}
+
+async function initPrejeu(){
+  await loadPregameScores();
+  PJ.playerName = localStorage.getItem('corbelin_player');
+  if(!PJ.playerName){
+    renderPjIdentify();
+    showPjView('identify');
+  } else {
+    document.getElementById('pj-welcome').textContent = 'Bonjour, '+PJ.playerName+' !';
+    document.getElementById('pj-lb-intro').style.display = 'none';
+    showPjView('intro');
+  }
+}
+
+function renderPjIdentify(){
+  const grid = document.getElementById('pj-id-grid');
+  grid.innerHTML = '';
+  PRENOMS.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'pgrid-btn';
+    btn.textContent = name;
+    btn.onclick = () => setPjPlayer(name);
+    grid.appendChild(btn);
+  });
+}
+
+function setPjPlayer(name){
+  PJ.playerName = name;
+  localStorage.setItem('corbelin_player', name);
+  document.getElementById('pj-welcome').textContent = 'Bonjour, '+name+' !';
+  document.getElementById('pj-lb-intro').style.display = 'none';
+  showPjView('intro');
+}
+
+function pjShuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+
+function startPjGame(){
+  PJ.game = { portraits: pjShuffle(PRENOMS), idx:0, totalScore:0, timer:null, startTime:null };
+  showPjView('game');
+  showPjPortrait(0);
+}
+
+function showPjPortrait(idx){
+  const g = PJ.game;
+  g.idx = idx;
+  clearTimeout(g.timer);
+
+  const name = g.portraits[idx];
+  document.getElementById('pj-progress').textContent = 'Portrait '+(idx+1)+' / 13';
+  document.getElementById('pj-score-live').textContent = g.totalScore;
+
+  // Portrait avec flou animé
+  const photo = PLAYER_PHOTOS[name];
+  const area = document.getElementById('pj-portrait-area');
+  if(photo){
+    area.innerHTML = `<div class="pj-portrait-wrap"><img id="pj-img" class="pj-portrait-img blurring" src="${photo}"></div>`;
+  } else {
+    area.innerHTML = `<div class="pj-portrait-wrap" id="pj-img" style="display:flex;align-items:center;justify-content:center;font-family:'Archivo Black',sans-serif;font-size:40px;color:var(--text-dim);animation:pj-deblur 25s linear forwards;">${name.charAt(0)}</div>`;
+  }
+
+  // Réinitialise la barre de timer en remplaçant le DOM
+  const barWrap = document.getElementById('pj-bar-wrap');
+  barWrap.innerHTML = '<div class="pj-timer-bar"></div>';
+
+  // Cache la zone de révélation
+  document.getElementById('pj-reveal-area').style.display = 'none';
+
+  // Boutons prénoms (ordre aléatoire)
+  const namesGrid = document.getElementById('pj-names-grid');
+  namesGrid.style.display = 'grid';
+  namesGrid.innerHTML = '';
+  const usedNames = new Set(g.portraits.slice(0, idx));
+  pjShuffle(PRENOMS).forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'pj-name-btn' + (usedNames.has(n) ? ' used' : '');
+    btn.textContent = n;
+    if(!usedNames.has(n)) btn.onclick = () => pjAnswer(n);
+    namesGrid.appendChild(btn);
+  });
+
+  g.startTime = Date.now();
+  g.timer = setTimeout(() => pjReveal(false, 0, true), 25000);
+}
+
+function pjAnswer(chosen){
+  const g = PJ.game;
+  clearTimeout(g.timer);
+  const elapsed = Date.now() - g.startTime;
+  const correct = chosen === g.portraits[g.idx];
+  const pts = correct ? Math.max(10, Math.round(100 - (90/25000)*elapsed)) : 0;
+  g.totalScore += pts;
+  document.getElementById('pj-score-live').textContent = g.totalScore;
+  // Désactive les boutons immédiatement
+  document.querySelectorAll('.pj-name-btn').forEach(b => b.disabled = true);
+  pjReveal(correct, pts, false);
+}
+
+function pjReveal(correct, pts, timeout){
+  const g = PJ.game;
+  const name = g.portraits[g.idx];
+
+  // Stoppe le flou
+  const img = document.getElementById('pj-img');
+  if(img){ img.style.animation='none'; img.style.filter='blur(0)'; }
+
+  // Stoppe la barre
+  const bar = document.querySelector('.pj-timer-bar');
+  if(bar){ const w = bar.getBoundingClientRect().width; bar.style.animation='none'; bar.style.width=w+'px'; }
+
+  // Cache les boutons
+  document.getElementById('pj-names-grid').style.display = 'none';
+
+  // Affiche la révélation
+  const label = timeout ? 'Temps écoulé — 0 pt' : (correct ? '+'+pts+' pt'+(pts>1?'s':'') : 'Faux ! — 0 pt');
+  const revealArea = document.getElementById('pj-reveal-area');
+  revealArea.style.display = 'block';
+  revealArea.innerHTML = `<div class="pj-reveal">
+    <div class="pj-reveal-name ${correct?'correct':'wrong'}">${name}</div>
+    <div class="pj-reveal-pts">${label}</div>
+  </div>`;
+
+  setTimeout(() => {
+    if(g.idx < 12){ showPjPortrait(g.idx+1); }
+    else { showPjResultScreen(); }
+  }, 1500);
+}
+
+async function showPjResultScreen(){
+  const g = PJ.game;
+  showPjView('result');
+
+  // Animation d'entrée du score
+  const scoreEl = document.getElementById('pj-final-score');
+  scoreEl.textContent = g.totalScore;
+  scoreEl.style.opacity = '0';
+  scoreEl.style.transform = 'scale(0.5)';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    scoreEl.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    scoreEl.style.opacity = '1';
+    scoreEl.style.transform = 'scale(1)';
+  }));
+
+  // Sauvegarde et classement
+  await savePregameScore(PJ.playerName, g.totalScore);
+  renderPjLeaderboard('pj-lb-result');
+}
+
+function renderPjLeaderboard(containerId){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const entries = Object.entries(PJ.scores)
+    .sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
+  if(!entries.length){
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);font-style:italic;text-align:center;padding:1rem;">Aucun score pour l\'instant.</div>';
+    return;
+  }
+  container.innerHTML = entries.map(([name,score],i) =>
+    `<div class="pj-lb-row">
+      <div class="pj-lb-rank">${i+1}</div>
+      <div class="pj-lb-name${name===PJ.playerName?' me':''}">${name}</div>
+      <div class="pj-lb-score">${score}</div>
+    </div>`
+  ).join('');
+}
+
+function showPjClassement(){
+  renderPjLeaderboard('pj-lb-intro-list');
+  document.getElementById('pj-lb-intro').style.display = 'block';
+}
+
+async function loadPregameScores(){
+  try{
+    const r = await fetch(JSONBIN_URL, { headers:{'X-Master-Key':JSONBIN_KEY,'X-Bin-Meta':false} });
+    const s = await r.json();
+    PJ.scores = s.pregameScores || {};
+  }catch(e){
+    try{
+      const s = JSON.parse(localStorage.getItem('corbelin_v4')||'{}');
+      PJ.scores = s.pregameScores || {};
+    }catch(e2){ PJ.scores = {}; }
+  }
+}
+
+async function savePregameScore(name, score){
+  if(!name) return;
+  const prev = PJ.scores[name] || 0;
+  if(score <= prev) return;
+  PJ.scores[name] = score;
+  // JSONBin : lecture → merge → écriture (préserve toutes les clés existantes)
+  try{
+    const r = await fetch(JSONBIN_URL, { headers:{'X-Master-Key':JSONBIN_KEY,'X-Bin-Meta':false} });
+    const s = await r.json();
+    await fetch(JSONBIN_URL, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+      body: JSON.stringify({...s, pregameScores: PJ.scores})
+    });
+  }catch(e){ console.log('PJ save error:', e); }
+  // localStorage backup
+  try{
+    const s = JSON.parse(localStorage.getItem('corbelin_v4')||'{}');
+    s.pregameScores = PJ.scores;
+    localStorage.setItem('corbelin_v4', JSON.stringify(s));
+  }catch(e){}
 }
 
 /* ── INIT ── */
